@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tito-fe-v0.5
+  name: deployment-v0.5
+  namespace: default
+spec:
+  minReadySeconds: 0
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tito-fe-v0.5
+  template:
+    metadata:
+      labels:
+        app: tito-fe-v0.5
+    spec:
+      containers:
+        - name: tito-fe-container   # Nom du container docker : k8s_tito-fe-container.<ID>  (docker ps)
+          image: vmeoc/tito-fe:V1.9.4
+          env:
+          - name: TITO_VERSION
+            value: V0.5
+          - name: PROXY_NAME
+            value: wvfp.cpod-vrealizesuite.az-demo.shwrfr.com
+          - name: PROXY_PORT
+            value: "2878"

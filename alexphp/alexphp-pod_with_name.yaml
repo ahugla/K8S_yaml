@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Pod 
+metadata:
+  name: alexphp-pod
+  labels:
+    app: alexphp
+spec:
+  containers:
+    - name: alexphp
+      image: alexfr75/php_show_system_info:1.1.0
+      ports:
+        - containerPort: 80
+
+
+---
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: alexphp-svc    # nom du Service
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    targetPort : 80    # port dans le container !! (INDISPENSABLE pour que cela fonctionne)
+    nodePort: 31280    # pour forcer le port expose par le service en externe (sinon alÃ©oire) (LB nord/sud)
+    port: 31180        # port interne pour le clusterIP (LB est/ouest)
+  selector:
+    app: alexphp
+
+

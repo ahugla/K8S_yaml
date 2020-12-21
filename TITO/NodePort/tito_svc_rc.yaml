@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: tito-fe-rc                  # nom du RC et des PODS
+spec:
+  replicas: 2
+  selector:
+    app: tito-fe
+  template:
+    metadata:
+      #generateName: tito-fe-pod-   # INUTILE car surcharge par: nom du RC-xxxxx
+      labels:
+        app: tito-fe
+    spec:
+      containers:
+        - name: tito-fe-container   # Nom du container docker : k8s_tito-fe-container.<ID>  (docker ps)
+          image: vmeoc/tito-fe:V1.9.4
+          env:
+          - name: TITO_VERSION
+            value: V1.9.2
+          - name: PROXY_NAME
+            value: wvfp1.cpod-vr.shwrfr.mooo.com
+          - name: PROXY_PORT
+            value: "2878"
+
+
+---
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: tito-fe-svc    # nom du Service
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    targetPort : 80    # port dans le container !! (INDISPENSABLE pour que cela fonctionne)
+    nodePort: 31200    # pour forcer le port expose par le service en externe (sinon alÃ©oire) (LB nord/sud)
+    port: 31180        # port interne pour le clusterIP (LB est/ouest)
+  selector:
+    app: tito-fe
