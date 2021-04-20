@@ -5,9 +5,7 @@ metadata:
   namespace: lamp-k8s
   labels:
     app.kubernetes.io/name: apache
-    helm.sh/chart: apache-8.5.1
     app.kubernetes.io/instance: lamp-apache
-    app.kubernetes.io/managed-by: Helm
 spec:
   type: LoadBalancer
   ports:
