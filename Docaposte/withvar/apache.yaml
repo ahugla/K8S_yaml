@@ -43,6 +43,9 @@ spec:
             - name: vhosts
               mountPath: /vhosts
       volumes:
+        - name: htdocs
+          configMap:
+            name: apache-healthcheck
         - name: vhosts
           configMap:
             name: apache-conf
