@@ -1,3 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lamp-apache
+  namespace: lamp-k8s
+  labels:
+    app.kubernetes.io/name: apache
+    helm.sh/chart: apache-8.5.1
+    app.kubernetes.io/instance: lamp-apache
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+    - name: https
+      port: 443
+      targetPort: https
+  selector:
+    app.kubernetes.io/name: apache
+    app.kubernetes.io/instance: lamp-apache
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,6 +45,26 @@ spec:
         app.kubernetes.io/instance: lamp-apache
         app.kubernetes.io/managed-by: Helm
     spec:
+      # yamllint disable rule:indentation
+      hostAliases:
+        - hostnames:
+          - status.localhost
+          ip: 127.0.0.1
+      # yamllint enable rule:indentation
+      affinity:
+        podAffinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: apache
+                    app.kubernetes.io/instance: lamp-apache
+                namespaces:
+                  - "ndc-app2"
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
       containers:
         - name: apache
           image: docker.io/bitnami/apache:2.4.46-debian-10-r218
@@ -34,6 +77,24 @@ spec:
               containerPort: 8080
             - name: https
               containerPort: 8443
+          livenessProbe:
+            httpGet:
+              path: /healthcheck.html
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 20
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /healthcheck.html
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
           resources:
             limits: {}
             requests: {}
@@ -43,9 +104,10 @@ spec:
             - name: vhosts
               mountPath: /vhosts
       volumes:
-        - name: htdocs
+        - name: htdocs     
           configMap:
             name: apache-healthcheck
         - name: vhosts
           configMap:
             name: apache-conf
+            
