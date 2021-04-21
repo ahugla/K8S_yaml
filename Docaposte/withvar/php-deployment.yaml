@@ -6,7 +6,7 @@ metadata:
   name: lamp-php-fpm
   namespace: lamp-k8s
 spec:
-  replicas: 1
+  replicas: $${NBRE_REPLICAS}
   selector:
     matchLabels:
       app: lamp-php-fpm

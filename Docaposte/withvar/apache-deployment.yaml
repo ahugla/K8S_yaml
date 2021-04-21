@@ -13,7 +13,7 @@ spec:
     matchLabels:
       app.kubernetes.io/name: apache
       app.kubernetes.io/instance: lamp-apache
-  replicas: 1
+  replicas: $${NBRE_REPLICAS}
   template:
     metadata:
       labels:
