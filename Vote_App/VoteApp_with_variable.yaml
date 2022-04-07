@@ -86,7 +86,7 @@ spec:
         "kubernetes.io/os": linux
       containers:
       - name: vote-frontend
-        image: alexfr75/vote-app:$${VOTE_FRONTEND_VERSION}
+        image: alexfr75/vote-app-frontend:$${VOTE_FRONTEND_VERSION}
         resources:
           requests:
             cpu: 100m
