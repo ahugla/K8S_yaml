@@ -71,7 +71,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vote-frontend
+  name: vote-frontend-$${VOTE_FRONTEND_VERSION}
 spec:
   replicas: $${VOTE_FRONTEND_REPLICA}
   selector:
