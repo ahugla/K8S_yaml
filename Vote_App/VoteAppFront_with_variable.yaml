@@ -17,28 +17,27 @@
 
 #  kubectl scale deployment vote-frontend --replicas=2
 
+
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vote-backend
+  name: vote-frontend
 spec:
-  replicas: $${VOTE_BACKEND_REPLICA}
+  replicas: $${VOTE_FRONTEND_REPLICA}
   selector:
     matchLabels:
-      app: vote-backend
+      app: vote-frontend
   template:
     metadata:
       labels:
-        app: vote-backend
+        app: vote-frontend
     spec:
       nodeSelector:
         "kubernetes.io/os": linux
       containers:
-      - name: vote-backend
-        image: alexfr75/vote-app-backend:v1.0
-        env:
-        - name: ALLOW_EMPTY_PASSWORD
-          value: "yes"
+      - name: vote-frontend
+        image: alexfr75/vote-app-frontend:$${VOTE_FRONTEND_VERSION}
         resources:
           requests:
             cpu: 100m
@@ -47,5 +46,8 @@ spec:
             cpu: 250m
             memory: 256Mi
         ports:
-        - containerPort: 6379
-          name: redis
+        - containerPort: 80
+        env:
+        - name: REDIS
+          value: "vote-backend"
+
