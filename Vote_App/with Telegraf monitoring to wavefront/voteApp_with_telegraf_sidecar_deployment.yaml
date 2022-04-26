@@ -1,0 +1,143 @@
+#
+# Source Template:     https://raw.githubusercontent.com/wavefrontHQ/wavefront-kubernetes/master/telegraf-sidecar/telegraf-sidecar.yaml
+#
+# Pensez a modifier les limits du container telegraf 'le defaut n'est pas suffisant'  => ca ne marche pas avec les defaults
+#  => pour le savoir, regarder la log du container telegraf pour voir si y a un pb de connexion ou une collecte pas fini
+#
+#
+# detail du pod Frontend:
+# ----------------------
+# LE POD contient 2 contrainers:
+#   - telegraf:
+#       entrypoint:  /entrypoint.sh        =>  "telegraf --config /etc/telegraf/telegraf.conf --config-directory /etc/telegraf/telegraf.d"    =>  s'execute en process ID=1   (ce n'est pas un service)
+#   - vote-frontend:
+#       entrypoint:/entrypoint.sh
+#  
+# Les deux containers partagent le volume: /var/log/nginx
+# 
+#
+#
+# TEST WAVEFRONT PROXY
+# --------------------
+# echo -e "alexhtest.metric 1 source=test_host\n" | nc vra-008178.cpod-vrealize.az-fkd.cloud-garage.net 2878
+#
+
+
+
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vote-frontend-with-telegraf
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vote-frontend
+  template:
+    metadata:
+      labels:
+        app: vote-frontend
+    spec:
+      containers:
+
+      # ***********************************************************************************************************
+      # Copy / Merge the following container into your Deployment / Statefuleset definition as a sidecar container
+      # ***********************************************************************************************************
+      - name: vote-frontend
+        image: alexfr75/vote-app-frontend:v1.1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        ports:
+        - containerPort: 80
+        env:
+        - name: REDIS
+          value: "vote-backend"
+        volumeMounts:
+        - name: access-log
+          mountPath: /var/log/nginx
+
+
+      # **************************
+      # Start telegraf Definition
+      # **************************
+      - name: telegraf
+        image: wavefronthq/telegraf-sidecar
+        ports:
+        - name: udp-statsd
+          containerPort: 8125
+        - name: udp-8092
+          containerPort: 8092
+        - name: tcp-8094
+          containerPort: 8094
+        env:
+        - name: WAVEFRONT_PROXY
+          value: "vra-008178.cpod-vrealize.az-fkd.cloud-garage.net"
+        - name: WAVEFRONT_PROXY_PORT
+          value: "2878"
+        - name: INTERVAL
+          value: 10s
+        - name: PREFIX
+          value: alexh2.
+        - name: METRIC_SOURCE_NAME
+          # This can be change to use the Deployment / Statefulset name instead as a simple value
+          # The metric source name should not be an ephemeral value
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: NODE_HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        resources:
+          requests:
+            cpu: 100m
+            memory: 30Mi
+          limits:
+            cpu: 250m         #  was 200m  -  was not enough and did not work
+            memory: 256Mi     #  was 50Mi  -  was not enough and did not work
+        volumeMounts:
+        - name: telegraf-d
+          mountPath: /etc/telegraf/telegraf.d/nginx.conf
+          subPath: nginx.conf
+        - name: tail-conf
+          mountPath: /etc/telegraf/telegraf.d/tail.conf
+          subPath: tail.conf
+        - name: access-log
+          mountPath: /var/log/nginx
+
+      # ************************
+      # End telegraf Definition
+      # ************************
+
+      volumes:
+      - name: telegraf-d
+        projected:
+          sources:
+          - configMap:
+              name: telegraf-config-for-nginx
+      - name: tail-conf
+        projected:
+          sources:
+          - configMap:
+              name: telegraf-config-for-nginx-tail
+      - name: access-log
+        emptyDir: {}
+
+
+
+
