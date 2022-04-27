@@ -26,37 +26,3 @@ data:
       # [[inputs.nginx.tags]]
         # tag1 = "foo"
         # tag2 = "bar"
-
-
----
-
-
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: telegraf-config-for-nginx-tail
-  namespace: default
-data:
-  tail.conf: |
-    [[inputs.tail]]
-    files = ["/var/log/nginx/access.log"]
-
-    ## Read file from beginning.
-    from_beginning = false
-
-    ## Whether file is a named pipe
-    pipe = false
-
-    ## measurement name prefix (to keep "tail" and "nginx" plugin metrics insync)
-    name_prefix = "nginx."
-
-    ## Data format to consume.
-    data_format = "grok"
-
-    grok_patterns = ["%{COMBINED_LOG_FORMAT}"]
-
-    ## Add tags to keep in sync with NGINX Server metrics
-    [inputs.tail.tags]
-      server = "<nginx_server>"
-      port = "<port>"
-
