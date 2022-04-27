@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: vote-frontend-$${VOTE_FRONTEND_VERSION}
 spec:
-  replicas: $${VOTE_FRONTEND_REPLICA}
+  replicas: "$${VOTE_FRONTEND_REPLICA}"
   selector:
     matchLabels:
       app: vote-frontend
@@ -54,7 +54,7 @@ spec:
         - name: WAVEFRONT_PROXY_PORT
           value: "$${WAVEFRONT_PROXY_PORT}"
         - name: INTERVAL
-          value: "10s"
+          value: 10s
         - name: PREFIX
           value: alexh2.
         - name: METRIC_SOURCE_NAME
