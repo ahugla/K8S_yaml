@@ -52,9 +52,9 @@ spec:
         - name: WAVEFRONT_PROXY
           value: $${WAVEFRONT_PROXY}
         - name: WAVEFRONT_PROXY_PORT
-          value: $${WAVEFRONT_PROXY_PORT}
+          value: "$${WAVEFRONT_PROXY_PORT}"
         - name: INTERVAL
-          value: 10s
+          value: "10s"
         - name: PREFIX
           value: alexh2.
         - name: METRIC_SOURCE_NAME
