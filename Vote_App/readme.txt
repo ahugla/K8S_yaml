@@ -1,8 +1,8 @@
 
 v1.0 : fond gris 
-v1.1 : fond gris avec /basic_status activé 
+v1.1 : fond gris avec /basic_status activé (pour telegraf monitoring)
 v2.0 : fond vert
-v2.1 : fond vert avec /basic_status activé
+v2.1 : fond vert avec /basic_status activé (pour telegraf monitoring)
 
 
 
