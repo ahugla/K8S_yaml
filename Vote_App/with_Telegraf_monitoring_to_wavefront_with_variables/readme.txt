@@ -21,5 +21,15 @@
 #
 # TEST WAVEFRONT PROXY
 # --------------------
-# echo -e "alexhtest.metric 1 source=test_host\n" | nc vra-008178.cpod-vrealize.az-fkd.cloud-garage.net 2878
+# echo -e "alexh2.metric 1 source=test_host\n" | nc vra-008178.cpod-vrealize.az-fkd.cloud-garage.net 2878
 #
+#
+# RECHERCHE DE LA METRIQUE DANS WAVEFRONT
+# ---------------------------------------
+# rechercher la metrique qui commence par "alexh2."
+#
+#
+#
+
+
+

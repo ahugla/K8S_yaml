@@ -1,0 +1,548 @@
+---
+project: CMP_SEs_Domaine
+kind: PIPELINE
+name: ALEX - Canary Deployment - VOTE APP with Telegraf and Logging
+icon: organization,left, is-teal
+enabled: true
+description: |-
+  Rechercher la metrique Wavefront qui commence par "alexh2."
+  Dans VRLI, dashboard "VoteApp"
+concurrency: 10
+input:
+  Vote_App_New_Version: v2.1
+  VoteApp_FrontEnd_Replicas: '5'
+  WAVEFRONT_FREQUENCY: 2s
+  WAVEFRONT_PROXY: vra-008178.cpod-vrealize.az-fkd.cloud-garage.net
+  WAVEFRONT_PROXY_PORT: '2878'
+_inputMeta:
+  Vote_App_New_Version:
+    description: Version de Vote App ("v1.1" ou "v2.1")
+    mandatory: true
+  WAVEFRONT_PROXY:
+    description: ''
+    mandatory: true
+  WAVEFRONT_PROXY_PORT:
+    description: ''
+    mandatory: true
+  VoteApp_FrontEnd_Replicas:
+    description: Nombre de replicas du FrontEnd
+    mandatory: true
+  WAVEFRONT_FREQUENCY:
+    description: Echantillonnage des points dans Wavefront ("10s" est le defaut)
+    mandatory: true
+workspace:
+  type: DOCKER
+  endpoint: ''
+  image: ''
+  registry: ''
+  path: ''
+  autoCloneForTrigger: false
+  limits:
+    memory: 512
+    cpu: 1.0
+stageOrder:
+- Cleaning
+- Deploy v1
+- Deploy Canary
+- new version to prod
+stages:
+  new version to prod:
+    taskOrder:
+    - up scale new version,down scale old version
+    tasks:
+      down scale old version:
+        type: K8S
+        endpoints:
+          scm: ahugla_github
+          kubernetesServer: Alex K8S
+        input:
+          action: APPLY
+          timeout: 5
+          filePath: Vote_App/with_Telegraf_monitoring_to_wavefront_with_logging_with_variables/voteAppFront_with_telegraf_sidecar_deployment_with_variables.yaml
+          scmConstants:
+            VOTE_FRONTEND_REPLICA: '0'
+            VOTE_FRONTEND_VERSION: v1.1
+            WAVEFRONT_PROXY: ${input.WAVEFRONT_PROXY}
+            WAVEFRONT_PROXY_PORT: ${input.WAVEFRONT_PROXY_PORT}
+            WAVEFRONT_FREQUENCY: ${input.WAVEFRONT_FREQUENCY}
+          yaml: ''
+      up scale new version:
+        type: K8S
+        endpoints:
+          scm: ahugla_github
+          kubernetesServer: Alex K8S
+        input:
+          action: APPLY
+          timeout: 5
+          filePath: Vote_App/with_Telegraf_monitoring_to_wavefront_with_logging_with_variables/voteAppFront_with_telegraf_sidecar_deployment_with_variables.yaml
+          scmConstants:
+            VOTE_FRONTEND_REPLICA: ${input.VoteApp_FrontEnd_Replicas}
+            VOTE_FRONTEND_VERSION: ${input.Vote_App_New_Version}
+            WAVEFRONT_PROXY: ${input.WAVEFRONT_PROXY}
+            WAVEFRONT_PROXY_PORT: ${input.WAVEFRONT_PROXY_PORT}
+            WAVEFRONT_FREQUENCY: ${input.WAVEFRONT_FREQUENCY}
+          yaml: ''
+  Deploy v1:
+    taskOrder:
+    - Deploy Front configmap nginx_conf,Deploy Front configmap tail_conf,Deploy Front configmap main_py,Deploy
+      Front v1,Deploy Backend,Deploy service Back,Deploy service Front
+    - wait to start
+    tasks:
+      Deploy Backend:
+        type: K8S
+        endpoints:
+          scm: ahugla_github
+          kubernetesServer: Alex K8S
+        input:
+          action: CREATE
+          timeout: 5
+          continueOnConflict: false
+          filePath: Vote_App/with_Telegraf_monitoring_to_wavefront_with_logging_with_variables/VoteAppBack_with_variables.yaml
+          scmConstants:
+            VOTE_BACKEND_REPLICA: '1'
+          yaml: ''
+      Deploy Front configmap nginx_conf:
+        type: K8S
+        endpoints:
+          scm: ahugla_github
+          kubernetesServer: Alex K8S
+        input:
+          action: APPLY
+          timeout: 5
+          filePath: Vote_App/with_Telegraf_monitoring_to_wavefront_with_logging_with_variables/voteAppFront_with_telegraf_sidecar_configmap_nginx.conf.yaml
+          scmConstants: {
+            }
+          yaml: ''
+      Deploy service Back:
+        type: K8S
+        endpoints:
+          scm: ahugla_github
+          kubernetesServer: Alex K8S
+        input:
+          action: CREATE
+          timeout: 5
+          continueOnConflict: false
+          filePath: Vote_App/with_Telegraf_monitoring_to_wavefront_with_logging_with_variables/VoteAppServiceBack.yaml
+          scmConstants: {
+            }
+          yaml: ''
+      wait to start:
+        type: UserOperation
+        input:
+          approvers:
+          - ${requestBy}
+          approverGroups: [
+            ]
+          summary: Vote App v1.0 ready
+          description: ''
+          sendemail: false
+          expiration: 3
+          expirationUnit: DAYS
+          pipelineName: ${name}
+          cancelPreviousPendingUserOp: false
+      Deploy Front configmap tail_conf:
+        type: K8S
+        endpoints:
+          scm: ahugla_github
+          kubernetesServer: Alex K8S
+        input:
+          action: APPLY
+          timeout: 5
+          filePath: Vote_App/with_Telegraf_monitoring_to_wavefront_with_logging_with_variables/voteAppFront_with_telegraf_sidecar_configmap_tail.conf.yaml
+          scmConstants: {
+            }
+          yaml: ''
+      Deploy Front v1:
+        type: K8S
+        endpoints:
+          scm: ahugla_github
+          kubernetesServer: Alex K8S
+        input:
+          action: APPLY
+          timeout: 5
+          filePath: Vote_App/with_Telegraf_monitoring_to_wavefront_with_logging_with_variables/voteAppFront_with_telegraf_sidecar_deployment_with_variables.yaml
+          scmConstants:
+            VOTE_FRONTEND_REPLICA: ${input.VoteApp_FrontEnd_Replicas}
+            VOTE_FRONTEND_VERSION: v1.1
+            WAVEFRONT_PROXY: ${input.WAVEFRONT_PROXY}
+            WAVEFRONT_PROXY_PORT: ${input.WAVEFRONT_PROXY_PORT}
+            WAVEFRONT_FREQUENCY: ${input.WAVEFRONT_FREQUENCY}
+          yaml: ''
+      Deploy service Front:
+        type: K8S
+        endpoints:
+          scm: ahugla_github
+          kubernetesServer: Alex K8S
+        input:
+          action: CREATE
+          timeout: 5
+          continueOnConflict: false
+          filePath: Vote_App/with_Telegraf_monitoring_to_wavefront_with_logging_with_variables/VoteAppServiceFront.yaml
+          scmConstants: {
+            }
+          yaml: ''
+      Deploy Front configmap main_py:
+        type: K8S
+        endpoints:
+          scm: ahugla_github
+          kubernetesServer: Alex K8S
+        input:
+          action: APPLY
+          timeout: 5
+          filePath: Vote_App/with_Telegraf_monitoring_to_wavefront_with_logging_with_variables/voteAppFront_with_telegraf_sidecar_configmap_main.py.yaml
+          scmConstants: {
+            }
+          yaml: ''
+  Cleaning:
+    taskOrder:
+    - Delete Front v1,Delete Front v2,Delete Backend,Delete Service Front,Delete Service Back,Delete configmap
+      nginx_conf,Delete configmap tail_conf,Delete configmap main_py
+    - pause
+    tasks:
+      Delete Service Back:
+        type: K8S
+        ignoreFailure: true
+        endpoints:
+          kubernetesServer: Alex K8S
+        input:
+          action: DELETE
+          timeout: 5
+          filePath: ''
+          scmConstants: {
+            }
+          yaml: |
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: vote-backend
+            spec:
+              ports:
+              - port: 6379
+              selector:
+                app: vote-backend
+      Delete Front v1:
+        type: K8S
+        ignoreFailure: true
+        endpoints:
+          kubernetesServer: Alex K8S
+        input:
+          action: DELETE
+          timeout: 5
+          filePath: ''
+          scmConstants: {
+            }
+          yaml: |
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: vote-frontend-v1.1
+            spec:
+              replicas: 10
+              selector:
+                matchLabels:
+                  app: vote-frontend
+              template:
+                metadata:
+                  labels:
+                    app: vote-frontend
+                spec:
+                  nodeSelector:
+                    "kubernetes.io/os": linux
+                  containers:
+                  - name: vote-frontend
+                    image: alexfr75/vote-app-frontend:v1.1
+                    resources:
+                      requests:
+                        cpu: 100m
+                        memory: 128Mi
+                      limits:
+                        cpu: 250m
+                        memory: 256Mi
+                    ports:
+                    - containerPort: 80
+                    env:
+                    - name: REDIS
+                      value: "vote-backend"
+      Delete configmap nginx_conf:
+        type: K8S
+        ignoreFailure: true
+        endpoints:
+          kubernetesServer: Alex K8S
+        input:
+          action: DELETE
+          timeout: 5
+          filePath: ''
+          scmConstants: {
+            }
+          yaml: |2
+
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: telegraf-config-for-nginx
+              namespace: default
+            data:
+              nginx.conf: |
+                [[inputs.nginx]]
+                  ## An array of Nginx status URI to gather stats.
+                  urls = ["http://$HOSTNAME/basic_status"]
+
+                  ## Optional SSL Config
+                  # ssl_ca = "/path/to/ca.pem"
+                  # ssl_cert = "/path/to/cert.pem"
+                  # ssl_key = "/path/to/key.pem"
+                  ## Use SSL but skip chain & host verification
+                  # insecure_skip_verify = false
+
+                  ## HTTP response timeout (default: 5s)
+                  response_timeout = "30s"
+
+                  # Specify optional tags to be applied to all metrics for this plugin
+                  # NOTE: Order matters, this needs to be at the end of the plugin definition
+                  # [[inputs.nginx.tags]]
+                    # tag1 = "foo"
+                    # tag2 = "bar"
+      Delete Backend:
+        type: K8S
+        ignoreFailure: true
+        endpoints:
+          kubernetesServer: Alex K8S
+        input:
+          action: DELETE
+          timeout: 5
+          filePath: ''
+          scmConstants: {
+            }
+          yaml: |-
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: vote-backend
+            spec:
+              replicas: 1
+              selector:
+                matchLabels:
+                  app: vote-backend
+              template:
+                metadata:
+                  labels:
+                    app: vote-backend
+                spec:
+                  nodeSelector:
+                    "kubernetes.io/os": linux
+                  containers:
+                  - name: vote-backend
+                    image: alexfr75/vote-app-backend:v1.0
+                    env:
+                    - name: ALLOW_EMPTY_PASSWORD
+                      value: "yes"
+                    resources:
+                      requests:
+                        cpu: 100m
+                        memory: 128Mi
+                      limits:
+                        cpu: 250m
+                        memory: 256Mi
+                    ports:
+                    - containerPort: 6379
+                      name: redis
+      Delete Service Front:
+        type: K8S
+        ignoreFailure: true
+        endpoints:
+          kubernetesServer: Alex K8S
+        input:
+          action: DELETE
+          timeout: 5
+          filePath: ''
+          scmConstants: {
+            }
+          yaml: |
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: vote-frontend
+            spec:
+              type: LoadBalancer
+              ports:
+              - port: 80
+              selector:
+                app: vote-frontend
+      Delete Front v2:
+        type: K8S
+        ignoreFailure: true
+        endpoints:
+          kubernetesServer: Alex K8S
+        input:
+          action: DELETE
+          timeout: 5
+          filePath: ''
+          scmConstants: {
+            }
+          yaml: |
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: vote-frontend-v2.1
+            spec:
+              replicas: 10
+              selector:
+                matchLabels:
+                  app: vote-frontend
+              template:
+                metadata:
+                  labels:
+                    app: vote-frontend
+                spec:
+                  nodeSelector:
+                    "kubernetes.io/os": linux
+                  containers:
+                  - name: vote-frontend
+                    image: alexfr75/vote-app-frontend:v2.1
+                    resources:
+                      requests:
+                        cpu: 100m
+                        memory: 128Mi
+                      limits:
+                        cpu: 250m
+                        memory: 256Mi
+                    ports:
+                    - containerPort: 80
+                    env:
+                    - name: REDIS
+                      value: "vote-backend"
+      Delete configmap main_py:
+        type: K8S
+        ignoreFailure: true
+        endpoints:
+          kubernetesServer: Alex K8S
+        input:
+          action: DELETE
+          timeout: 5
+          filePath: ''
+          scmConstants: {
+            }
+          yaml: "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: main-py-config\n  namespace: default\n\
+            data:\n  main.py: |\n\n    from flask import Flask, request, render_template\n    import os\n\
+            \    import random\n    import redis\n    import socket\n    import sys\n\n    app = Flask(__name__)\n\
+            \n    # Load configurations\n    app.config.from_pyfile('config_file.cfg')\n    button1 =\
+            \       app.config['VOTE1VALUE']\n    button2 =       app.config['VOTE2VALUE']\n    title\
+            \ =         app.config['TITLE']\n\n    # Redis configurations\n    redis_server = os.environ['REDIS']\n\
+            \n    # Redis Connection\n    try:\n        if \"REDIS_PWD\" in os.environ:\n            r\
+            \ = redis.StrictRedis(host=redis_server,\n                            port=6379,\n       \
+            \                     password=os.environ['REDIS_PWD'])\n        else:\n            r = redis.Redis(redis_server)\n\
+            \        r.ping()\n    except redis.ConnectionError:\n        exit('Failed to connect to Redis,\
+            \ terminating.')\n\n    # Change title to host name to demo NLB\n    if app.config['SHOWHOST']\
+            \ == \"true\":\n        title =  \"v2.1 - \" + socket.gethostname()\n\n    # Init Redis\n\
+            \    if not r.get(button1): r.set(button1,0)\n    if not r.get(button2): r.set(button2,0)\n\
+            \n    @app.route('/', methods=['GET', 'POST'])\n    def index():\n \n        if request.method\
+            \ == 'GET':\n\n            # ALEX  \n            f = open(\"/var/log/nginx/app.log\", \"a\"\
+            )\n            f.write(\"-- VoteApp -- verb:GET -- action:read \\n\")\n            f.close()\n\
+            \n            # Get current values\n            vote1 = r.get(button1).decode('utf-8')\n \
+            \           vote2 = r.get(button2).decode('utf-8')\n\n            # Return index with values\n\
+            \            return render_template(\"index.html\", value1=int(vote1), value2=int(vote2),\
+            \ button1=button1, button2=button2, title=title)\n\n        elif request.method == 'POST':\n\
+            \            if request.form['vote'] == 'reset':\n\n                # ALEX\n             \
+            \   f = open(\"/var/log/nginx/app.log\", \"a\")\n                f.write(\"-- VoteApp -- verb:POST\
+            \ -- action:reset  \\n\")\n                f.close()\n                \n                #\
+            \ Empty table and return results\n                r.set(button1,0)\n                r.set(button2,0)\n\
+            \                vote1 = r.get(button1).decode('utf-8')\n                vote2 = r.get(button2).decode('utf-8')\n\
+            \                return render_template(\"index.html\", value1=int(vote1), value2=int(vote2),\
+            \ button1=button1, button2=button2, title=title)\n\n            else:\n \n               \
+            \ # Insert vote result into DB\n                vote = request.form['vote']\n            \
+            \    r.incr(vote,1)\n\n                # Get current values\n                vote1 = r.get(button1).decode('utf-8')\n\
+            \                vote2 = r.get(button2).decode('utf-8')\n\n                # ALEX\n      \
+            \          f = open(\"/var/log/nginx/app.log\", \"a\")\n                f.write(\"-- VoteApp\
+            \ -- verb:POST -- action:vote -- cats:\" +vote1 +\" -- dogs:\" +vote2 +\"\\n\")\n        \
+            \        f.close()\n\n                # Return results\n                return render_template(\"\
+            index.html\", value1=int(vote1), value2=int(vote2), button1=button1, button2=button2, title=title)\n\
+            \n    if __name__ == \"__main__\":\n        app.run()\n"
+      Delete configmap tail_conf:
+        type: K8S
+        ignoreFailure: true
+        endpoints:
+          kubernetesServer: Alex K8S
+        input:
+          action: DELETE
+          timeout: 5
+          filePath: ''
+          scmConstants: {
+            }
+          yaml: |-
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: telegraf-config-for-nginx-tail
+              namespace: default
+            data:
+              tail.conf: |
+                [[inputs.tail]]
+                files = ["/var/log/nginx/access.log"]
+
+                ## Read file from beginning.
+                from_beginning = false
+
+                ## Whether file is a named pipe
+                pipe = false
+
+                ## measurement name prefix (to keep "tail" and "nginx" plugin metrics insync)
+                name_prefix = "nginx."
+
+                ## Data format to consume.
+                data_format = "grok"
+
+                grok_patterns = ["%{COMBINED_LOG_FORMAT}"]
+
+                ## Add tags to keep in sync with NGINX Server metrics
+                [inputs.tail.tags]
+                  server = "<nginx_server>"
+                  port = "<port>"
+      pause:
+        type: UserOperation
+        input:
+          approvers:
+          - ${requestBy}
+          approverGroups: [
+            ]
+          summary: clean OK ?
+          description: ''
+          sendemail: false
+          expiration: 3
+          expirationUnit: DAYS
+          pipelineName: ${name}
+          cancelPreviousPendingUserOp: false
+  Deploy Canary:
+    taskOrder:
+    - Deploy canary
+    - wait to approve canary
+    tasks:
+      Deploy canary:
+        type: K8S
+        endpoints:
+          scm: ahugla_github
+          kubernetesServer: Alex K8S
+        input:
+          action: APPLY
+          timeout: 5
+          filePath: Vote_App/with_Telegraf_monitoring_to_wavefront_with_logging_with_variables/voteAppFront_with_telegraf_sidecar_deployment_with_variables.yaml
+          scmConstants:
+            VOTE_FRONTEND_REPLICA: '2'
+            VOTE_FRONTEND_VERSION: ${input.Vote_App_New_Version}
+            WAVEFRONT_PROXY: ${input.WAVEFRONT_PROXY}
+            WAVEFRONT_PROXY_PORT: ${input.WAVEFRONT_PROXY_PORT}
+            WAVEFRONT_FREQUENCY: ${input.WAVEFRONT_FREQUENCY}
+          yaml: ''
+      wait to approve canary:
+        type: UserOperation
+        input:
+          approvers:
+          - ${requestBy}
+          approverGroups: [
+            ]
+          summary: Canary ready
+          description: ''
+          sendemail: false
+          expiration: 3
+          expirationUnit: DAYS
+          pipelineName: ${name}
+          cancelPreviousPendingUserOp: false
