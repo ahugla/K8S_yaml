@@ -51,7 +51,7 @@ data:
 
             # ALEX  
             f = open("/var/log/nginx/app.log", "a")
-            f.write("--- VoteApp --- verb:GET --- action:read \n")
+            f.write("-- VoteApp -- verb:GET -- action:read \n")
             f.close()
 
             # Get current values
@@ -66,7 +66,7 @@ data:
 
                 # ALEX
                 f = open("/var/log/nginx/app.log", "a")
-                f.write("--- VoteApp --- verb:POST --- action:reset  \n")
+                f.write("-- VoteApp -- verb:POST -- action:reset  \n")
                 f.close()
                 
                 # Empty table and return results
@@ -88,7 +88,7 @@ data:
 
                 # ALEX
                 f = open("/var/log/nginx/app.log", "a")
-                f.write("--- VoteApp --- verb:POST --- action:vote --- cats:" +vote1 +" --- dogs:" +vote2 +"\n")
+                f.write("-- VoteApp -- verb:POST -- action:vote -- cats:" +vote1 +" -- dogs:" +vote2 +"\n")
                 f.close()
 
                 # Return results
