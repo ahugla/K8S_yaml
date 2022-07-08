@@ -38,7 +38,7 @@ data:
 
     # Change title to host name to demo NLB
     if app.config['SHOWHOST'] == "true":
-        title =  "v2.1 - " + socket.gethostname()
+        title =  "VoteApp - " + socket.gethostname()
 
     # Init Redis
     if not r.get(button1): r.set(button1,0)
