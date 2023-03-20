@@ -31,6 +31,10 @@ Basé sur :  https://docs.microsoft.com/en-us/azure/aks/kubernetes-walkthrough
 
  kubectl scale deployment vote-frontend --replicas=2
 
+ Exposer redis pour utiliser RedisInsight:
+ 	- exposer le service backend:  kubectl expose deployment vote-backend --type=LoadBalancer --name=vote-backend-svc
+ 	- access : IP_LB:6379   (dans RedisInsight: pas de login/pass, tout unckeck)
+
 
  ajout dans /etc/nginx/nginx.conf
 
