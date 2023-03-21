@@ -6,6 +6,9 @@
 # Pensez a modifier les limits du container telegraf 'le defaut n'est pas suffisant'  => ca ne marche pas avec les defaults
 #  => pour le savoir, regarder la log du container telegraf pour voir si y a un pb de connexion ou une collecte pas fini
 #
+# 
+# Entrer dans le container telegraf du pod:  "kubectl  exec -it [POD-NAME] -c telegraf -- /bin/bash"
+#
 #
 # detail du pod Frontend:
 # ----------------------
