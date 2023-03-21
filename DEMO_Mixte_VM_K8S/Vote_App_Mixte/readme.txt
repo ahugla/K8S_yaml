@@ -27,6 +27,15 @@
 # echo -e "alexh2.metric 1 source=test_host\n" | nc vra-008178.cpod-vrealize.az-fkd.cloud-garage.net 2878
 #
 #
+# WAVEFRONT => Prefixe ou Dashboard nginx
+# ---------------------------------------
+# Dans le yaml du deploiement on peut positionner la variable d'environnement PREFIX
+#        - name: PREFIX
+#          value: alexh2.
+# Dans ce cas les metriques commencent toutes par alexh2. et sont donc plus facile a trouver
+# Par contre, on n'a pas l'integration dans le dashboard par defaut nginx qui lui a besoin de metrique nginx. (c est a dire sans prefixe).
+#    
+#
 # RECHERCHE DE LA METRIQUE DANS WAVEFRONT
 # ---------------------------------------
 # rechercher la metrique qui commence par "alexh2.", par exemple "alexh2.nginx.handled"
