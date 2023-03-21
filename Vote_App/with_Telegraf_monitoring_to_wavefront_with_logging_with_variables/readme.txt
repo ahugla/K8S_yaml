@@ -30,6 +30,20 @@
 #
 #
 #
+#
+# SI LE TOKEN WAVEFRONT A EXPIRE
+# ------------------------------
+# - Supprimer le container docker   "docker stop" puis "docker rm"
+# - Creer un nouveau container avec le bon token
+#   docker run -d \
+#     -e WAVEFRONT_URL=https://vmware.wavefront.com/api/ \
+#     -e WAVEFRONT_TOKEN=7ecxxxxx-xxxx-xxxx-xxxx-xxxxxxxx938b \
+#     -e JAVA_HEAP_USAGE=512m \
+#     -p 2878:2878 \
+#     -p 4242:4242 \
+#     --restart always \
+#     wavefronthq/proxy:latest
+#
 
 
 
