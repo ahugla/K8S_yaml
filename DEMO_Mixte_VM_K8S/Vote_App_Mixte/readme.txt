@@ -26,7 +26,7 @@
 #
 # RECHERCHE DE LA METRIQUE DANS WAVEFRONT
 # ---------------------------------------
-# rechercher la metrique qui commence par "alexh2."
+# rechercher la metrique qui commence par "alexh2.", par exemple "alexh2.nginx.handled"
 #
 #
 #
