@@ -1,0 +1,122 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vote-frontend-$${VOTE_FRONTEND_VERSION}
+spec:
+  replicas: $${VOTE_FRONTEND_REPLICA}
+  selector:
+    matchLabels:
+      app: vote-frontend
+  template:
+    metadata:
+      labels:
+        app: vote-frontend
+    spec:
+      containers:
+
+      # ***********************************************************************************************************
+      # Copy / Merge the following container into your Deployment / Statefuleset definition as a sidecar container
+      # ***********************************************************************************************************
+      - name: vote-frontend
+        image: alexfr75/vote-app-frontend:$${VOTE_FRONTEND_VERSION}
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        ports:
+        - containerPort: 80
+        env:
+        - name: REDIS
+          value: "vote-backend"
+        volumeMounts:
+        - name: access-log
+          mountPath: /var/log/nginx
+        - name: main-py
+          mountPath: /app/main.py
+          subPath: main.py
+
+
+      # **************************
+      # Start telegraf Definition
+      # **************************
+      - name: telegraf
+        image: wavefronthq/telegraf-sidecar
+        ports:
+        - name: udp-statsd
+          containerPort: 8125
+        - name: udp-8092
+          containerPort: 8092
+        - name: tcp-8094
+          containerPort: 8094
+        env:
+        - name: WAVEFRONT_PROXY
+          value: $${WAVEFRONT_PROXY}
+        - name: WAVEFRONT_PROXY_PORT
+          value: "$${WAVEFRONT_PROXY_PORT}"
+        - name: INTERVAL
+          value: $${WAVEFRONT_FREQUENCY}    # defaut 10s
+        - name: PREFIX
+          value: alexh2.
+        - name: METRIC_SOURCE_NAME
+          # This can be change to use the Deployment / Statefulset name instead as a simple value
+          # The metric source name should not be an ephemeral value
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: NODE_HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        resources:
+          requests:
+            cpu: 100m
+            memory: 30Mi
+          limits:
+            cpu: 250m         #  was 200m  -  was not enough and did not work
+            memory: 256Mi     #  was 50Mi  -  was not enough and did not work
+        volumeMounts:
+        - name: telegraf-d
+          mountPath: /etc/telegraf/telegraf.d/nginx.conf
+          subPath: nginx.conf
+        - name: tail-conf
+          mountPath: /etc/telegraf/telegraf.d/tail.conf
+          subPath: tail.conf
+        - name: access-log
+          mountPath: /var/log/nginx
+
+      # ************************
+      # End telegraf Definition
+      # ************************
+
+      volumes:
+      - name: telegraf-d
+        projected:
+          sources:
+          - configMap:
+              name: telegraf-config-for-nginx
+      - name: tail-conf
+        projected:
+          sources:
+          - configMap:
+              name: telegraf-config-for-nginx-tail
+      - name: access-log
+        #emptyDir: {}
+        hostPath:
+          path: /var/log/k8s-app/VoteApp/Front
+      - name: main-py
+        projected:
+          sources:
+          - configMap:
+              name: main-py-config
