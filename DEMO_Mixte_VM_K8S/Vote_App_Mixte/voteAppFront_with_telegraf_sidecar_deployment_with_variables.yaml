@@ -59,8 +59,8 @@ spec:
           value: "$${WAVEFRONT_PROXY_PORT}"
         - name: INTERVAL
           value: $${WAVEFRONT_FREQUENCY}    # defaut 10s
-        #- name: PREFIX
-        #  value: alexh2.
+        - name: PREFIX
+          value: $${WAVEFRONT_PREFIX}
         - name: METRIC_SOURCE_NAME
           # This can be change to use the Deployment / Statefulset name instead as a simple value
           # The metric source name should not be an ephemeral value
