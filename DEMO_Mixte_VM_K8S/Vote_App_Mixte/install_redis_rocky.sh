@@ -10,8 +10,10 @@ systemctl enable --now redis
 ss -tunelp | grep 6379
 
 # Accepter les connections remotes
-sed -i -e 's/bind 127.0.0.1/bind 0.0.0.0/g'  /etc/redis.conf    
 # Pour voir la config en masquant les commentaires:    grep ^[^#]  /etc/redis.conf
+# OLD : sed -i -e 's/bind 127.0.0.1/bind 0.0.0.0/g'  /etc/redis.conf    
+# default :  bind 127.0.0.1 -::1 
+sed -i -e 's/bind 127.0.0.1 -::1/bind * -::*/g'  /etc/redis/redis.conf
 
 
 systemctl  restart redis
