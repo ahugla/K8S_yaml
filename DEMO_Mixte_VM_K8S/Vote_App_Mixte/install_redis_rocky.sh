@@ -13,7 +13,7 @@
 # ----------
 WAVEFRONT_PROXY=$1                         # ex: vra-008178.cpod-vrealize.az-fkd.cloud-garage.net
 WAVEFRONT_PROXY_PORT=$2                    # ex: 2878
-WAVEFRONT_PREFIX=$3                        # ex: alexh   OU   VIDE
+WAVEFRONT_PREFIX=$3                        # ex: alexh   OU   VIDE    ex: "alexh2 => alexh2redis...."    ex: "alexh2. => alexh2.redis...."
 echo "WAVEFRONT_PROXY = " $WAVEFRONT_PROXY
 echo "WAVEFRONT_PROXY_PORT = " $WAVEFRONT_PROXY_PORT
 echo "WAVEFRONT_PREFIX = " $WAVEFRONT_PREFIX
