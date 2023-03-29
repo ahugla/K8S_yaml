@@ -50,36 +50,6 @@ systemctl status redis
 
 
 
-
-
-## Load Redis environment variables
-#. /opt/bitnami/scripts/redis-env.sh
-
-## Load libraries
-#. /opt/bitnami/scripts/libbitnami.sh
-#. /opt/bitnami/scripts/libredis.sh
-
-
-#print_welcome_page
-
-#if [[ "$*" = *"/opt/bitnami/scripts/redis/run.sh"* || "$*" = *"/run.sh"* ]]; then
-#    info "** Starting Redis setup **"
-#    /opt/bitnami/scripts/redis/setup.sh
-#    info "** Redis setup finished! **"
-#fi
-
-#echo ""
-#exec "$@"     #  $@  :all the parameters: $1, $2, $3...  (mais pas $0)
-
-#grep -rnl /* -e 'Cats'
-#	/bitnami/redis/data/appendonly.aof
-# /bitnami/redis/data/dump.rdb
-
-
-
-
-
-
 # INSTALL TELEGRAF & ENABLE MONITORING BY WAVEFRONT
 # -------------------------------------------------
 
