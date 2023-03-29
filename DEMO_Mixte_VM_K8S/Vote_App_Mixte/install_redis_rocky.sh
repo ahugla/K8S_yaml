@@ -90,7 +90,7 @@ echo " " >> /etc/telegraf/telegraf.conf
 echo "# CONFIG WAVEFRONT"    >> /etc/telegraf/telegraf.conf
 echo "[[outputs.wavefront]]" >> /etc/telegraf/telegraf.conf
 echo "  host = \"$WAVEFRONT_PROXY\"                   #  proxy URL"  >> /etc/telegraf/telegraf.conf
-echo "  port = \"$WAVEFRONT_PROXY_PORT\"              #  proxy port" >> /etc/telegraf/telegraf.conf
+echo "  port = $WAVEFRONT_PROXY_PORT                  #  proxy port" >> /etc/telegraf/telegraf.conf   # NE doit PAS etre entre double quote
 echo "  prefix = \"$WAVEFRONT_PREFIX\"                #  optionnel"  >> /etc/telegraf/telegraf.conf
 
 systemctl enable telegraf
