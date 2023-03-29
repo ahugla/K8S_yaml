@@ -1,10 +1,22 @@
 #!/bin/bash
 
 
+# USAGE
+# -----
+#
+# ./install_redis_rocky.sh  vra-008178.cpod-vrealize.az-fkd.cloud-garage.net  2878  [alexh2]
+#
+#
+
+
 # PARAMETERS
 # ----------
-WAVEFRONT_PROXY=e7788df6e9d3                    # ID du container docker si le proxy est en container
+WAVEFRONT_PROXY=$1                         # ex: vra-008178.cpod-vrealize.az-fkd.cloud-garage.net
+WAVEFRONT_PROXY_PORT=$2                    # ex: 2878
+WAVEFRONT_PREFIX=$3                        # ex: alexh   OU   VIDE
 echo "WAVEFRONT_PROXY = " $WAVEFRONT_PROXY
+echo "WAVEFRONT_PROXY_PORT = " $WAVEFRONT_PROXY_PORT
+echo "WAVEFRONT_PREFIX = " $WAVEFRONT_PREFIX
 
 
 
@@ -105,9 +117,9 @@ echo " " >> /etc/telegraf/telegraf.conf
 echo " " >> /etc/telegraf/telegraf.conf
 echo "# CONFIG WAVEFRONT"    >> /etc/telegraf/telegraf.conf
 echo "[[outputs.wavefront]]" >> /etc/telegraf/telegraf.conf
-echo "  host = \"vra-008178.cpod-vrealize.az-fkd.cloud-garage.net\"   #  proxy URL"  >> /etc/telegraf/telegraf.conf
-echo "  port = 2878                                                   #  proxy port" >> /etc/telegraf/telegraf.conf
-echo "  prefix = \"\"                                                 #  optionnel"  >> /etc/telegraf/telegraf.conf
+echo "  host = \"$WAVEFRONT_PROXY\"                   #  proxy URL"  >> /etc/telegraf/telegraf.conf
+echo "  port = \"$WAVEFRONT_PROXY_PORT\"              #  proxy port" >> /etc/telegraf/telegraf.conf
+echo "  prefix = \"$WAVEFRONT_PREFIX\"                #  optionnel"  >> /etc/telegraf/telegraf.conf
 
 systemctl enable telegraf
 systemctl start telegraf
