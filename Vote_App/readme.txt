@@ -76,6 +76,9 @@ installation de redis:
 	sed -i -e 's/bind 127.0.0.1/bind 0.0.0.0/g'  /etc/redis.conf    
 	systemctl  restart redis
 	
+Le fichier de conf "redis.conf" NE doit PAS contenir d'elements lié à une authentification. Ainsi on peut se connecter sans login/pass.
+
+
 
 
 RELATION FRONT-END - BACKEND
@@ -85,13 +88,19 @@ Sur le frontend, dans le fichier "main.py", le pod front-end pointe vers le back
 	redis_server = os.environ['REDIS']
 
 Dans le yaml du pod frontend, on definit la variable d'env 'REDIS'= vote-backend. 
-	env:
+  env:
     - name: REDIS
       value: "vote-backend"
-Ainsi dasn le pod :
+Ainsi dans le pod :
 	root@vote-frontend-v1:/app# env | grep REDIS
-	REDIS=vote-backend
+	                            REDIS=vote-backend
 
 OR 'vote-backend' est enregistré dans le CoreDNS avec le cluster IP du service redis  =>  il y a bien resolution de vote-backend en cluster IP du service redis
 
-Si on change la variable d'environnement defini dans le yaml par une IP on peut pointer vers un autre redis, physique.
+Si on change la variable d'environnement definie dans le yaml par une IP on peut pointer vers un autre redis, physique.
+
+
+
+
+
+                       
