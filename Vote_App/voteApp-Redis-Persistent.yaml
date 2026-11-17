@@ -1,0 +1,116 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: voteapp-redis-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: vsan-default-storage-policy
+  resources:
+    requests:
+        storage: 1Gi
+
+
+---
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vote-backend
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vote-backend
+  template:
+    metadata:
+      labels:
+        app: vote-backend
+    spec:
+      containers:
+      - name: vote-backend
+        image: harbor.labfr.com/voteapp/vote-app-backend:v1.0
+        env:
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "yes"
+        ports:
+        - containerPort: 6379
+          name: redis
+        volumeMounts:
+        - name: redis-slave-data
+          mountPath: "/bitnami/redis/data"
+      securityContext:
+        fsGroup: 1001 
+      imagePullSecrets:
+      - name: harbor-credentials
+      volumes:
+      - name: redis-slave-data
+        persistentVolumeClaim:
+          claimName: voteapp-redis-pvc
+
+
+---
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: vote-backend
+  namespace: default
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: vote-backend
+
+
+---
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vote-frontend
+  namespace: default 
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vote-frontend
+  template:
+    metadata:
+      labels:
+        app: vote-frontend
+    spec:
+      initContainers:
+      - name: check-db
+        image: busybox:1.28
+        command: ['sh', '-c', 'until nc -z -v -w3 vote-backend 6379; do echo "Attente de la base de données..."; sleep 2; done']
+      containers:
+      - name: vote-frontend
+        image: harbor.labfr.com/voteapp/vote-app-frontend:v1.0
+        ports:
+        - containerPort: 80
+        env:
+        - name: REDIS
+          value: "vote-backend"
+      imagePullSecrets:
+      - name: harbor-credentials
+
+---
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: vote-frontend
+  namespace: default
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+  selector:
+    app: vote-frontend
+

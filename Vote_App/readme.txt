@@ -77,7 +77,12 @@ installation de redis:
 	systemctl  restart redis
 	
 Le fichier de conf "redis.conf" NE doit PAS contenir d'elements lié à une authentification. Ainsi on peut se connecter sans login/pass.
+Le fichier de conf redis est ici:  /opt/bitnami/redis/etc/redis.conf
 
+
+Pour mettre la DB redis sur Volume Persistent:
+  - mount pour la DB:  "/bitnami/redis/data"   (configuré dans le fichier redis.conf)
+  
 
 
 
